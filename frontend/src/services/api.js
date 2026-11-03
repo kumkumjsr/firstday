@@ -111,10 +111,136 @@
 
 
 
+// import axios from "axios";
+
+// const BASE_URL = "http://127.0.0.1:8000/api/";
+
+// const API = axios.create({
+//   baseURL: BASE_URL,
+//   headers: {
+//     "Content-Type": "application/json",
+//   },
+// });
+
+// const refreshClient = axios.create({
+//   baseURL: BASE_URL,
+// });
+
+// API.interceptors.request.use(
+//   (config) => {
+//     const isLoginRequest = config.url?.includes("token/");
+
+//     if (isLoginRequest) {
+//       delete config.headers.Authorization;
+//       return config;
+//     }
+
+//     const token = localStorage.getItem("access_token");
+
+//     if (token) {
+//       config.headers.Authorization = `Bearer ${token}`;
+//     }
+
+//     return config;
+//   },
+//   (error) => Promise.reject(error)
+// );
+
+// let isRefreshing = false;
+// let failedQueue = [];
+
+// const processQueue = (error, token = null) => {
+//   failedQueue.forEach(({ resolve, reject }) => {
+//     if (error) {
+//       reject(error);
+//     } else {
+//       resolve(token);
+//     }
+//   });
+
+//   failedQueue = [];
+// };
+
+// API.interceptors.response.use(
+//   (response) => response,
+
+//   async (error) => {
+//     const originalRequest = error.config;
+
+//     if (
+//       error.response?.status !== 401 ||
+//       !originalRequest ||
+//       originalRequest._retry ||
+//       originalRequest.url?.includes("token/")
+//     ) {
+//       return Promise.reject(error);
+//     }
+
+//     const refreshToken = localStorage.getItem("refresh_token");
+
+//     if (!refreshToken) {
+//       logoutAndRedirect();
+//       return Promise.reject(error);
+//     }
+
+//     if (isRefreshing) {
+//       return new Promise((resolve, reject) => {
+//         failedQueue.push({ resolve, reject });
+//       }).then((token) => {
+//         originalRequest.headers.Authorization = `Bearer ${token}`;
+//         return API(originalRequest);
+//       });
+//     }
+
+//     originalRequest._retry = true;
+//     isRefreshing = true;
+
+//     try {
+//       const response = await refreshClient.post("token/refresh/", {
+//         refresh: refreshToken,
+//       });
+
+//       const newAccessToken = response.data.access;
+
+//       localStorage.setItem("access_token", newAccessToken);
+
+//       processQueue(null, newAccessToken);
+
+//       originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+//       return API(originalRequest);
+//     } catch (refreshError) {
+//       processQueue(refreshError, null);
+//       logoutAndRedirect();
+
+//       return Promise.reject(refreshError);
+//     } finally {
+//       isRefreshing = false;
+//     }
+//   }
+// );
+
+// function logoutAndRedirect() {
+//   localStorage.removeItem("access_token");
+//   localStorage.removeItem("refresh_token");
+
+//   window.location.href = "/admin-login";
+// }
+
+// export default API;
+
+
+
 import axios from "axios";
 
-const BASE_URL = "http://127.0.0.1:8000/api/";
+// =========================================================
+// LIVE BACKEND URL
+// =========================================================
+const BASE_URL = "https://firstday-9c55.onrender.com/api/";
 
+// =========================================================
+// MAIN API CLIENT
+// =========================================================
 const API = axios.create({
   baseURL: BASE_URL,
   headers: {
@@ -122,14 +248,21 @@ const API = axios.create({
   },
 });
 
+// =========================================================
+// REFRESH TOKEN CLIENT
+// =========================================================
 const refreshClient = axios.create({
   baseURL: BASE_URL,
 });
 
+// =========================================================
+// REQUEST INTERCEPTOR
+// =========================================================
 API.interceptors.request.use(
   (config) => {
     const isLoginRequest = config.url?.includes("token/");
 
+    // Login / token request me old Authorization header nahi bhejna
     if (isLoginRequest) {
       delete config.headers.Authorization;
       return config;
@@ -146,6 +279,9 @@ API.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// =========================================================
+// TOKEN REFRESH QUEUE
+// =========================================================
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -161,12 +297,16 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
+// =========================================================
+// RESPONSE INTERCEPTOR
+// =========================================================
 API.interceptors.response.use(
   (response) => response,
 
   async (error) => {
     const originalRequest = error.config;
 
+    // Agar 401 nahi hai, directly error return
     if (
       error.response?.status !== 401 ||
       !originalRequest ||
@@ -178,11 +318,13 @@ API.interceptors.response.use(
 
     const refreshToken = localStorage.getItem("refresh_token");
 
+    // Refresh token nahi hai
     if (!refreshToken) {
       logoutAndRedirect();
       return Promise.reject(error);
     }
 
+    // Agar already refresh chal raha hai
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject });
@@ -211,6 +353,7 @@ API.interceptors.response.use(
       return API(originalRequest);
     } catch (refreshError) {
       processQueue(refreshError, null);
+
       logoutAndRedirect();
 
       return Promise.reject(refreshError);
@@ -220,6 +363,9 @@ API.interceptors.response.use(
   }
 );
 
+// =========================================================
+// LOGOUT
+// =========================================================
 function logoutAndRedirect() {
   localStorage.removeItem("access_token");
   localStorage.removeItem("refresh_token");
