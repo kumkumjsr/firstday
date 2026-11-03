@@ -187,8 +187,6 @@
 #     "AUTH_HEADER_TYPES": ("Bearer",),
 # }
 
-
-
 from pathlib import Path
 import os
 from datetime import timedelta
@@ -214,6 +212,7 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "0.0.0.0",
+    "firstday-9c55.onrender.com",
 ]
 
 # =====================================================
@@ -304,7 +303,6 @@ DATABASES = {
 
 # =====================================================
 # CUSTOM USER MODEL
-# Configure before first migration
 # =====================================================
 
 AUTH_USER_MODEL = "accounts.User"
@@ -355,8 +353,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # =====================================================
 
 CORS_ALLOWED_ORIGINS = [
+    # Local frontend
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+
+    # Production frontend
+    "https://hidustantime.netlify.app",
 ]
 
 # =====================================================
